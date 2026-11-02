@@ -1,13 +1,23 @@
+import sbt.Compile
+
+ThisBuild / semanticdbEnabled := true
+
 lazy val root = (project in file("."))
-  .enablePlugins(GatlingPlugin)
   .settings(
     name := "sdec-stride-performance-tests",
     version := "0.1.0-SNAPSHOT",
-    scalaVersion := "2.13.12",
-    //implicitConversions & postfixOps are Gatling recommended -language settings
-    scalacOptions ++= Seq("-feature", "-language:implicitConversions", "-language:postfixOps"),
-    // Enabling sbt-auto-build plugin provides DefaultBuildSettings with default `testOptions` from `sbt-settings` plugin.
-    // These testOptions are not compatible with `sbt gatling:test`. So we have to override testOptions here.
-    Test / testOptions := Seq.empty,
-    libraryDependencies ++= Dependencies.test
+    scalaVersion := "3.3.7",
+    libraryDependencies ++= Dependencies.test,
+    Compile / scalafmtOnCompile := true,
+    Test / scalafmtOnCompile := true,
+    (Compile / compile) := ((Compile / compile) dependsOn (
+      Compile / scalafmtSbtCheck,
+      Compile / scalafmtCheckAll
+    )).value
   )
+
+// @formatter:off
+addCommandAlias("prePrChecks", "; scalafmtCheckAll; scalafmtSbtCheck; scalafixAll --check; --check")
+addCommandAlias("lint", "; scalafmtAll; scalafmtSbt; scalafixAll")
+addCommandAlias("prePush", "; reload; clean; compile; test; it/test; lint;")
+// @formatter:on
